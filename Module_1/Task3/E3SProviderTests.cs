@@ -40,12 +40,40 @@ namespace Task3
         {
             var employees = new E3SEntitySet<EmployeeEntity>(ConfigurationManager.AppSettings["user"], ConfigurationManager.AppSettings["password"]);
 
-            foreach (var emp in employees.Where(e => "ESYJ-NDC" == e.project))
+            foreach (var emp in employees.Where(e => e.project == "ESYJ-NDC"))
+            {
+                Console.WriteLine("{0} {1}", emp.nativename, emp.startworkdate);
+            }
+            Console.WriteLine(Environment.NewLine);
+
+            var easyjetPersonsStartWith = employees.Where(e => e.project.StartsWith("E"));
+            foreach (var emp in easyjetPersonsStartWith)
+            {
+                Console.WriteLine("{0} {1}", emp.nativename, emp.startworkdate);
+            }
+            Console.WriteLine(Environment.NewLine);
+
+            var easyjetPersonsContains = employees.Where(e => e.project.Contains("E"));
+            foreach (var emp in easyjetPersonsContains)
             {
                 Console.WriteLine("{0} {1}", emp.nativename, emp.startworkdate);
             }
 
-            foreach (var emp in employees.Where(e => e.project == "ESYJ-NDC"))
+            Console.WriteLine(Environment.NewLine);
+
+            var easyjetPersonsEndsWith = employees.Where(e => e.project.EndsWith("E"));
+            foreach (var emp in easyjetPersonsEndsWith)
+            {
+                Console.WriteLine("{0} {1}", emp.nativename, emp.startworkdate);
+            }
+        }
+
+        [TestMethod]
+        public void WithProviderAndMethod()
+        {
+            var employees = new E3SEntitySet<EmployeeEntity>(ConfigurationManager.AppSettings["user"], ConfigurationManager.AppSettings["password"]);
+            var easyjetPersonsAnd = employees.Where(e => e.project == "ESYJ-NDC" && e.project == "EPM-ASMT");
+            foreach (var emp in easyjetPersonsAnd)
             {
                 Console.WriteLine("{0} {1}", emp.nativename, emp.startworkdate);
             }

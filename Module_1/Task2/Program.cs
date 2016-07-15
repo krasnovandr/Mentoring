@@ -13,7 +13,8 @@ namespace Task2
             {
                 Name = "Alex",
                 Age = 22,
-                BirthDate = DateTime.Now
+                BirthDate = DateTime.Now,
+                Test = new TestClass { A = 2}
             };
             var res = mapper.Map(objectForCopy);
            

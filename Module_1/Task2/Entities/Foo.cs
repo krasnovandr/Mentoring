@@ -7,5 +7,6 @@ namespace Task2.Entities
         public int Age { get; set; }
         public DateTime BirthDate { get; set; }
         public string Name { get; set; }
+        public TestClass Test { get; set; }
     }
 }

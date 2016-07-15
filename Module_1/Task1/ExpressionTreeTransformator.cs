@@ -1,9 +1,33 @@
-﻿using System.Linq.Expressions;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 
 namespace Task1
 {
     public class ExpressionTreeTransformator : ExpressionVisitor
     {
+        private readonly Dictionary<string, int> _mapperList;
+        public ExpressionTreeTransformator(Dictionary<string, int> mapperList)
+        {
+            _mapperList = mapperList;
+        }
+
+        protected override Expression VisitLambda<T>(Expression<T> node)
+        {
+            var parameters = node.Parameters
+                                 .Where(p => _mapperList.ContainsKey(p.Name));
+
+            return Expression.Lambda<T>(Visit(node.Body), parameters);
+        }
+
+
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            var constantToReplace = _mapperList.FirstOrDefault(m => m.Key == node.Name).Value;
+            return Expression.Constant(constantToReplace);
+        }
+
+
         protected override Expression VisitBinary(BinaryExpression node)
         {
             if (node.NodeType == ExpressionType.Subtract || node.NodeType == ExpressionType.Add)
@@ -45,5 +69,10 @@ namespace Task1
 
             return base.VisitBinary(node);
         }
+
+
     }
+
+
+
 }
