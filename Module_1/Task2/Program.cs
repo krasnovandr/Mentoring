@@ -21,6 +21,7 @@ namespace Task2
             Console.WriteLine("{0}", res.Age);
             Console.WriteLine("{0}", res.BirthDate);
             Console.WriteLine("{0}", res.Name);
+            Console.WriteLine("{0}", res.Test.A);
             Console.ReadKey();
         }
     }

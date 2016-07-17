@@ -20,9 +20,11 @@ namespace Task1
             var decrementResult = decr.Compile().Invoke(2);
 
             Console.WriteLine(incrementExpression);
+            Console.WriteLine(incr);
             Console.WriteLine(incrementResult);
 
             Console.WriteLine(decrementExpression);
+            Console.WriteLine(decr);
             Console.WriteLine(decrementResult);
 
             Expression<Func<int, int, int>> expression = (a, b) => (a + b) + (a - 2);
