@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <link>http://library.by/catalog</link>
+    <description />
+    <title>Catalog</title>
+    <item>
+      <title>COM and .NET Component Services</title>
+      <description>
+      COM &amp; .NET Component Services provides both traditional COM programmers and new .NET
+      component developers with the information they need to begin developing applications that take full advantage of COM+ services.
+      This book focuses on COM+ services, including support for transactions, queued components, events, concurrency management, and security
+    </description>
+      <pubDate>Tue, 05 Jan 2016 00:00:00 GMT</pubDate>
+      <guid>http://library.by/catalog/bk101</guid>
+      <link>http://my.safaribooksonline.com/0-596-00103-7/</link>
+    </item>
+    <item>
+      <title>Midnight Rain</title>
+      <description>
+      A former architect battles corporate zombies,
+      an evil sorceress, and her own childhood to become queen
+      of the world.
+    </description>
+      <pubDate>Sun, 01 Jan 2017 00:00:00 GMT</pubDate>
+      <guid>http://library.by/catalog/bk102</guid>
+    </item>
+    <item>
+      <title>Maeve Ascendant</title>
+      <description>
+      After the collapse of a nanotechnology
+      society in England, the young survivors lay the
+      foundation for a new society.
+    </description>
+      <pubDate>Tue, 05 Jan 2016 00:00:00 GMT</pubDate>
+      <guid>http://library.by/catalog/bk103</guid>
+    </item>
+    <item>
+      <title>Oberon's Legacy</title>
+      <description>
+      In post-apocalypse England, the mysterious
+      agent known only as Oberon helps to create a new life
+      for the inhabitants of London. Sequel to Maeve
+      Ascendant.
+    </description>
+      <pubDate>Thu, 01 Mar 2012 00:00:00 GMT</pubDate>
+      <guid>http://library.by/catalog/bk104</guid>
+    </item>
+    <item>
+      <title>The Sundered Grail</title>
+      <description>
+      The two daughters of Maeve, half-sisters,
+      battle one another for control of England. Sequel to
+      Oberon's Legacy.
+    </description>
+      <pubDate>Tue, 05 Jan 2016 00:00:00 GMT</pubDate>
+      <guid>http://library.by/catalog/bk105</guid>
+    </item>
+    <item>
+      <title>Lover Birds</title>
+      <description>
+      When Carla meets Paul at an ornithology
+      conference, tempers fly as feathers get ruffled.
+    </description>
+      <pubDate>Tue, 05 Jan 2016 00:00:00 GMT</pubDate>
+      <guid>http://library.by/catalog/bk106</guid>
+    </item>
+    <item>
+      <title>Splish Splash</title>
+      <description>
+      A deep sea diver finds true love twenty
+      thousand leagues beneath the sea.
+    </description>
+      <pubDate>Thu, 05 Jan 2012 00:00:00 GMT</pubDate>
+      <guid>http://library.by/catalog/bk107</guid>
+    </item>
+    <item>
+      <title>Creepy Crawlies</title>
+      <description>
+      An anthology of horror stories about roaches,
+      centipedes, scorpions  and other insects.
+    </description>
+      <pubDate>Wed, 05 Jan 2011 00:00:00 GMT</pubDate>
+      <guid>http://library.by/catalog/bk108</guid>
+    </item>
+    <item>
+      <title>Paradox Lost</title>
+      <description>
+      After an inadvertant trip through a Heisenberg
+      Uncertainty Device, James Salway discovers the problems
+      of being quantum.
+    </description>
+      <pubDate>Tue, 05 Jan 2016 00:00:00 GMT</pubDate>
+      <guid>http://library.by/catalog/bk109</guid>
+    </item>
+    <item>
+      <title>Microsoft .NET: The Programming Bible</title>
+      <description>
+      Microsoft's .NET initiative is explored in
+      detail in this deep programmer's reference.
+    </description>
+      <pubDate>Wed, 01 Oct 2014 00:00:00 GMT</pubDate>
+      <guid>http://library.by/catalog/bk110</guid>
+    </item>
+    <item>
+      <title>MSXML3: A Comprehensive Guide</title>
+      <description>
+      The Microsoft MSXML3 parser is covered in
+      detail, with attention to XML DOM interfaces, XSLT processing,
+      SAX and more.
+    </description>
+      <pubDate>Mon, 15 Mar 2010 00:00:00 GMT</pubDate>
+      <guid>http://library.by/catalog/bk111</guid>
+    </item>
+    <item>
+      <title>Visual Studio 7: A Comprehensive Guide</title>
+      <description>
+      Microsoft Visual Studio 7 is explored in depth,
+      looking at how Visual Basic, Visual C++, C#, and ASP+ are
+      integrated into a comprehensive development
+      environment.
+    </description>
+      <pubDate>Mon, 25 Apr 2011 00:00:00 GMT</pubDate>
+      <guid>http://library.by/catalog/bk112</guid>
+    </item>
+  </channel>
+</rss>
