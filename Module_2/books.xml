@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <catalog xmlns="http://library.by/catalog">
   <book id="bk101">
-    <isbn>0-596-00103-7</isbn>
     <author>Löwy, Juval</author>
+    <isbn>0-596-00103-7</isbn>
     <title>COM and .NET Component Services</title>
     <genre>Computer</genre>
     <publisher>O'Reilly</publisher>
