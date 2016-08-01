@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Task1.Host
 {
@@ -8,23 +9,28 @@ namespace Task1.Host
         static void Main()
         {
 
-            //IntPtr buffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(ulong)));
+            //var a =PowerManagmentApi.GetLastSleepTimeTotalSeconds();
+            //Thread.Sleep(2000);
+            //var b =PowerManagmentApi.GetLastWakeTimeTotalSeconds();
+            //Console.WriteLine(a);
+            //Console.WriteLine(b);
+            IntPtr buffer = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(ulong)));
 
-            //var outputBufferSize = (UInt32)Marshal.SizeOf(typeof(ulong));
-            //PowrProfLibrary.CallNtPowerInformation(15, (IntPtr)null, 0, buffer, outputBufferSize);
-            //uint statusSleepTime = (uint)Marshal.ReadInt32(buffer);
+            var outputBufferSize = (UInt32)Marshal.SizeOf(typeof(ulong));
+            PowrProfLibrary.CallNtPowerInformation(15, (IntPtr)null, 0, buffer, outputBufferSize);
+            uint statusSleepTime = (uint)Marshal.ReadInt32(buffer);
 
-            //var lastSleepTime = TimeSpan.FromTicks(statusSleepTime);
-            //Console.WriteLine(lastSleepTime);
+            var lastSleepTime = TimeSpan.FromTicks(statusSleepTime);
+            Console.WriteLine(lastSleepTime);
 
-            //PowrProfLibrary.CallNtPowerInformation(14, (IntPtr)null, 0, buffer, outputBufferSize);
-            //uint statusWakeTime = (uint)Marshal.ReadInt32(buffer);
-
-
+            PowrProfLibrary.CallNtPowerInformation(14, (IntPtr)null, 0, buffer, outputBufferSize);
+            uint statusWakeTime = (uint)Marshal.ReadInt32(buffer);
 
 
-            //var lastWake = TimeSpan.FromTicks(statusWakeTime);
-            //Console.WriteLine(lastWake);
+
+
+            var lastWake = TimeSpan.FromTicks(statusWakeTime);
+            Console.WriteLine(lastWake);
 
 
             //IntPtr status = Marshal.AllocCoTaskMem(Marshal.SizeOf(typeof(SYSTEM_BATTERY_STATE)));

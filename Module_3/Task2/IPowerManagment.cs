@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using Task1;
+﻿using System.Runtime.InteropServices;
 
 namespace Task2
 {
@@ -15,9 +9,13 @@ namespace Task2
     {
         void EnterSleepMode();
         void EnterHybernateMode();
-        TimeSpan GetLastSleepTime();
-        TimeSpan GetLastWakeTime();
-        SYSTEM_BATTERY_STATE GetBatteryState();
-        SYSTEM_POWER_INFORMATION GetPowerinformation();
+        double GetLastSleepTime();
+        double GetLastWakeTime();
+        uint GetBatteryMaxCapacity();
+        uint GetBatteryRemainingCapacity();
+        char GetSystemCoolingMode();
+        void ReserveHybernationFile();
+        void DeleteHybernationFile();
+
     }
 }

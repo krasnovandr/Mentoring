@@ -1,0 +1,1 @@
+cscript.exe /x test.vbs
