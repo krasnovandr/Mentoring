@@ -1,98 +1,159 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
-using MigraDoc.DocumentObjectModel;
-using MigraDoc.Rendering;
-using Topshelf;
 
 namespace Task1
 {
     public class FileMonitorService
     {
         private FileSystemWatcher watcher;
-        private string inDir;
-        private string outDir;
+        private string _inputDirectory;
+        private readonly string _resultDirectory;
 
-        private Thread workThread;
+        //private Thread workThread;
 
         private ManualResetEvent stopWorkEvent;
         private AutoResetEvent newFileEvent;
+        private Regex fileMask;
+        private string lastProcessedFile;
+        private DateTime lastProcessedFileTime;
+        private TimeSpan processingTimeout;
 
-        public FileMonitorService(string inDir, string outDir)
+        public FileMonitorService(string inputDirectory, string resultDirectory)
         {
-            this.inDir = inDir;
-            this.outDir = outDir;
+            this._inputDirectory = inputDirectory;
+            this._resultDirectory = resultDirectory;
 
-            if (!Directory.Exists(inDir))
-                Directory.CreateDirectory(inDir);
+            if (!Directory.Exists(inputDirectory))
+                Directory.CreateDirectory(inputDirectory);
 
-            if (!Directory.Exists(outDir))
-                Directory.CreateDirectory(outDir);
+            if (!Directory.Exists(resultDirectory))
+                Directory.CreateDirectory(resultDirectory);
 
-            //watcher = new FileSystemWatcher(inDir);
-            //watcher.Created += Watcher_Created;
+            watcher = new FileSystemWatcher(inputDirectory);
+            watcher.Created += Watcher_Created;
 
-            workThread = new Thread(WorkProcedure);
+            //workThread = new Thread(WorkProcedure);
             stopWorkEvent = new ManualResetEvent(false);
             newFileEvent = new AutoResetEvent(false);
+            fileMask = new Regex(@"([A-Za-z0-9])*_\d*.(jpg|jpeg|png|gif|bmp)");
+            lastProcessedFile = string.Empty;
+            lastProcessedFileTime = new DateTime();
+            processingTimeout = new TimeSpan(0, 0, 0, 10);
         }
 
-        private void WorkProcedure(object obj)
-        {
-            do
-            {
-                foreach (var file in Directory.EnumerateFiles(inDir))
-                {
-                    if (stopWorkEvent.WaitOne(TimeSpan.Zero))
-                        return;
-
-                    var inFile = file;
-                    var outFile = Path.Combine(outDir, Path.GetFileName(file));
-
-                    if (TryOpen(inFile, 3))
-                        if (!string.IsNullOrEmpty(Path.GetFileName(file)))
-                        {
-                            var document = new Document();
-                            var section = document.AddSection();
-                            var img = section.AddImage(file);
-                            img.Height = document.DefaultPageSetup.PageHeight;
-                            img.Width = document.DefaultPageSetup.PageWidth;
-
-                            section.AddPageBreak();
-
-                            var render = new PdfDocumentRenderer();
-                            render.Document = document;
-
-                            render.RenderDocument();
-                            render.Save("result.pdf");
-                            File.Delete(file);
-                        }
-                    
-                }
-                Thread.Sleep(1000);
-            } while (true);
-        }
-
-        //private void Watcher_Created(object sender, FileSystemEventArgs e)
+        //private void WorkProcedure(object obj)
         //{
-        //    newFileEvent.Set();
+        //    do
+        //    {
+        //        foreach (var file in Directory.EnumerateFiles(inputDirectory))
+        //        {
+        //            if (stopWorkEvent.WaitOne(TimeSpan.Zero))
+        //                return;
+
+        //            var outputFilePath = Path.Combine(resultDirectory, Path.GetFileName(file));
+
+        //            if (TryOpen(file, 3))
+        //            {
+        //                if (!string.IsNullOrEmpty(Path.GetFileName(file)) &&
+        //                    Regex.IsMatch(file, fileMask.ToString(), RegexOptions.IgnoreCase))
+        //                {
+
+
+        //                    if (false)
+        //                    {
+        //                        PdfDocumentManager.CreateDocument();
+        //                    }
+
+        //                    File.Copy(file, outputFilePath);
+        //                    PdfDocumentManager.CreateDocument();
+        //                    PdfDocumentManager.AddImageToDocument(file);
+        //                    File.Delete(file);
+        //                }
+        //            }
+        //        }
+        //    } while (WaitHandle.WaitAny(new WaitHandle[] { stopWorkEvent, newFileEvent }, 1000) !=0 );
         //}
+
+        private void Watcher_Created(object sender, FileSystemEventArgs e)
+        {
+            FileInfo file = new FileInfo(e.FullPath);
+
+
+            if (!string.IsNullOrEmpty(Path.GetFileName(file.Name)) &&
+                Regex.IsMatch(file.Name, fileMask.ToString(), RegexOptions.IgnoreCase))
+            {
+                //todo determine is it new sequence
+
+                if (IsNewFileSequence(lastProcessedFile, file.Name))
+                {
+                    PdfDocumentManager.RenderDocument(_resultDirectory);
+                    PdfDocumentManager.AddImageToDocument(file.FullName);
+                }
+                else
+                {
+                    PdfDocumentManager.AddImageToDocument(file.FullName);
+                }
+            }
+
+            lastProcessedFile = file.Name;
+            lastProcessedFileTime = DateTime.Now;
+            //newFileEvent.Set();
+        }
+
+        private bool IsNewFileSequence(string lastFile, string newFile)
+        {
+            //is first file
+            if (string.IsNullOrEmpty(lastFile))
+            {
+                return true;
+            }
+
+            var previousNumber = ParsFileNumber(lastFile);
+            var newNumber = ParsFileNumber(newFile);
+
+            if ((previousNumber + 1) != newNumber )
+            {
+                return true;
+            }
+
+            if (lastProcessedFileTime.Add(processingTimeout) < DateTime.Now)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private int ParsFileNumber(string fileName)
+        {
+            fileName = Path.GetFileNameWithoutExtension(fileName);
+
+            if (string.IsNullOrEmpty(fileName))
+            {
+                return default(int);
+            }
+
+            int number;
+            string parsedNumber = fileName.Split('_')[1];
+            int.TryParse(parsedNumber, out number);
+
+            return number;
+        }
 
         public void Start()
         {
-            workThread.Start();
-            //watcher.EnableRaisingEvents = true;
+            //workThread.Start();
+            watcher.EnableRaisingEvents = true;
         }
 
         public void Stop()
         {
-            //watcher.EnableRaisingEvents = false;
-            stopWorkEvent.Set();
-            workThread.Join();
+            watcher.EnableRaisingEvents = false;
+            PdfDocumentManager.RenderDocument(_resultDirectory);
+            //stopWorkEvent.Set();
+            //workThread.Join();
         }
 
         private bool TryOpen(string fileName, int tryCount)
