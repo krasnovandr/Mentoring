@@ -19,6 +19,7 @@ namespace Task1
         private string lastProcessedFile;
         private DateTime lastProcessedFileTime;
         private TimeSpan processingTimeout;
+        Thread workThread;
 
         public FileMonitorService(string inputDirectory, string resultDirectory)
         {
@@ -34,53 +35,48 @@ namespace Task1
             watcher = new FileSystemWatcher(inputDirectory);
             watcher.Created += Watcher_Created;
 
-            //workThread = new Thread(WorkProcedure);
+            workThread = new Thread(WorkProcedure);
             stopWorkEvent = new ManualResetEvent(false);
             newFileEvent = new AutoResetEvent(false);
             fileMask = new Regex(@"([A-Za-z0-9])*_\d*.(jpg|jpeg|png|gif|bmp)");
             lastProcessedFile = string.Empty;
             lastProcessedFileTime = new DateTime();
             processingTimeout = new TimeSpan(0, 0, 0, 10);
+
+            InitialProcessing();
         }
 
-        //private void WorkProcedure(object obj)
-        //{
-        //    do
-        //    {
-        //        foreach (var file in Directory.EnumerateFiles(inputDirectory))
-        //        {
-        //            if (stopWorkEvent.WaitOne(TimeSpan.Zero))
-        //                return;
+        private void WorkProcedure()
+        {
+            while (WaitHandle.WaitAny(new WaitHandle[] { stopWorkEvent, newFileEvent }, 10000) != 0)
+            {
+                InitialProcessing();
+            }
+        }
 
-        //            var outputFilePath = Path.Combine(resultDirectory, Path.GetFileName(file));
+        private void InitialProcessing()
+        {
+            foreach (var file in Directory.EnumerateFiles(_inputDirectory))
+            {
+                if (stopWorkEvent.WaitOne(TimeSpan.Zero))
+                    return;
 
-        //            if (TryOpen(file, 3))
-        //            {
-        //                if (!string.IsNullOrEmpty(Path.GetFileName(file)) &&
-        //                    Regex.IsMatch(file, fileMask.ToString(), RegexOptions.IgnoreCase))
-        //                {
+                var fileInfo = new FileInfo(file);
 
-
-        //                    if (false)
-        //                    {
-        //                        PdfDocumentManager.CreateDocument();
-        //                    }
-
-        //                    File.Copy(file, outputFilePath);
-        //                    PdfDocumentManager.CreateDocument();
-        //                    PdfDocumentManager.AddImageToDocument(file);
-        //                    File.Delete(file);
-        //                }
-        //            }
-        //        }
-        //    } while (WaitHandle.WaitAny(new WaitHandle[] { stopWorkEvent, newFileEvent }, 1000) !=0 );
-        //}
+                if (TryOpen(file, 3))
+                    HandleNewFile(fileInfo);
+            }
+        }
 
         private void Watcher_Created(object sender, FileSystemEventArgs e)
         {
-            FileInfo file = new FileInfo(e.FullPath);
+            newFileEvent.Set();
+            //var file = new FileInfo(e.FullPath);
+            //HandleNewFile(file);
+        }
 
-
+        private void HandleNewFile(FileInfo file)
+        {
             if (!string.IsNullOrEmpty(Path.GetFileName(file.Name)) &&
                 Regex.IsMatch(file.Name, fileMask.ToString(), RegexOptions.IgnoreCase))
             {
@@ -99,7 +95,6 @@ namespace Task1
 
             lastProcessedFile = file.Name;
             lastProcessedFileTime = DateTime.Now;
-            //newFileEvent.Set();
         }
 
         private bool IsNewFileSequence(string lastFile, string newFile)
@@ -113,7 +108,7 @@ namespace Task1
             var previousNumber = ParsFileNumber(lastFile);
             var newNumber = ParsFileNumber(newFile);
 
-            if ((previousNumber + 1) != newNumber )
+            if ((previousNumber + 1) != newNumber)
             {
                 return true;
             }
@@ -144,16 +139,17 @@ namespace Task1
 
         public void Start()
         {
-            //workThread.Start();
+            workThread.Start();
             watcher.EnableRaisingEvents = true;
         }
 
         public void Stop()
         {
             watcher.EnableRaisingEvents = false;
+            
+            stopWorkEvent.Set();
+            workThread.Join();
             PdfDocumentManager.RenderDocument(_resultDirectory);
-            //stopWorkEvent.Set();
-            //workThread.Join();
         }
 
         private bool TryOpen(string fileName, int tryCount)
