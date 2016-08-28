@@ -40,7 +40,7 @@ namespace Task1
             _cancellationToken = new CancellationTokenSource();
             richTextBox1.Text += "Downloads started." + Environment.NewLine;
             dataGridView1.ClearSelection();
-           
+
             MapGridColumnToTheList();
             var progress = new Progress<double>();
             progress.ProgressChanged += progress_ProgressChanged;
@@ -78,16 +78,13 @@ namespace Task1
         {
 
             var client = new HttpClient();
-          
+
             var downloadTasksQuery = _urlList.Select((t, i) => DownloadFileAsync(t, null, token, client, i)).ToList();
 
             int finishedCount = default(int);
             while (downloadTasksQuery.Any())
             {
-                if (token.IsCancellationRequested)
-                {
-                    token.ThrowIfCancellationRequested();
-                }
+                token.ThrowIfCancellationRequested();
                 Task<Result> firstFinishedTask = await Task.WhenAny(downloadTasksQuery);
 
                 downloadTasksQuery.Remove(firstFinishedTask);
@@ -120,19 +117,11 @@ namespace Task1
 
         public async Task<Result> DownloadFileAsync(string url, IProgress<double> progress, CancellationToken token, HttpClient client, int number)
         {
-
-
             var response = await client.GetAsync(url, token);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception(string.Format("The request returned with HTTP status code {0}", response.StatusCode));
-            }
+            response.EnsureSuccessStatusCode();
 
-            if (token.IsCancellationRequested)
-            {
-                token.ThrowIfCancellationRequested();
-            }
+            token.ThrowIfCancellationRequested();
 
             byte[] urlContents = await response.Content.ReadAsByteArrayAsync();
 
