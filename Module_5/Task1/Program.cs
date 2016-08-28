@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using Topshelf;
 
@@ -10,9 +11,9 @@ namespace Task1
         {
 
             var currentDir = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-            var inDir = Path.Combine(currentDir, "in");
-            var resultDir = Path.Combine(currentDir, "Result");
-            var faultDir = Path.Combine(currentDir, "Fault");
+            var inDir = Path.Combine(currentDir, ConfigurationManager.AppSettings["InputDirectory"]);
+            var resultDir = Path.Combine(currentDir, ConfigurationManager.AppSettings["ResultDirectory"]);
+            var faultDir = Path.Combine(currentDir, ConfigurationManager.AppSettings["FaultDirectory"]);
 
             HostFactory.Run(
                 hostConf => hostConf.Service<FileMonitorService>(
