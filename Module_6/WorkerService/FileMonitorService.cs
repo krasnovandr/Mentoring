@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
+using MessageContracts;
+using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 
 namespace WorkerService
@@ -13,7 +15,8 @@ namespace WorkerService
         private readonly string _faultDirectory;
         private readonly PdfDocumentManager _pfPdfDocumentManager;
         private readonly ManualResetEvent _stopWorkEvent;
-
+        const string TopicName = "TestTopic";
+        private readonly string SubsName = "SettingsSubs";
 
         public FileMonitorService(string inputDirectory, string resultDirectory, string faultDirectory)
         {
@@ -69,8 +72,17 @@ namespace WorkerService
 
         public void Start()
         {
+            var client = SubscriptionClient.Create(TopicName, SubsName, ReceiveMode.ReceiveAndDelete);
+            client.OnMessage(NewMessage);
+
+
             InitialProcessing();
             _watcher.EnableRaisingEvents = true;
+        }
+
+        private void NewMessage(BrokeredMessage obj)
+        {
+            var a = obj.GetBody<WorkerServiceSettings>();
         }
 
         public void Stop()

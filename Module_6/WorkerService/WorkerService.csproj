@@ -91,6 +91,12 @@
   <ItemGroup>
     <Folder Include="Images\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MessageContracts\MessageContracts.csproj">
+      <Project>{E2CABC3C-6C37-4FDE-B2AD-72CBDC51E1A9}</Project>
+      <Name>MessageContracts</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

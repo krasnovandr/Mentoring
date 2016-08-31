@@ -5,7 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using MessageContracts;
+using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
+using System.Drawing;
 
 namespace MainService
 {
@@ -14,11 +17,15 @@ namespace MainService
         private const string queueName = "filequeue";
         private Thread workThread;
         private QueueClient client;
+        private TopicClient _topicClient;
+        const string TopicName = "TestTopic";
+        private readonly string SubsName = "SettingsSubs";
 
         public MessageHandler()
         {
             workThread = new Thread(WorkProcedure);
             client = QueueClient.Create(queueName);
+            _topicClient = TopicClient.Create(TopicName);
         }
 
         private void WorkProcedure()
@@ -26,7 +33,23 @@ namespace MainService
             do
             {
                 //File.AppendAllText("Results.txt", OnMessage() + Environment.NewLine);
-                OnMessage();
+                try
+                {
+                    _topicClient.Send(new BrokeredMessage(new WorkerServiceSettings
+                    {
+                        BarcodeImage = (Bitmap)Image.FromFile("Barcode_1.gif"),
+                        ImageName = "New Sequence",
+                        ProcessingTimeout = new TimeSpan(0, 1, 0)
+                    }) { TimeToLive = new TimeSpan(0, 1, 0) });
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
+
+
+                //OnMessage();
                 Thread.Sleep(2000);
             }
             while (true);
@@ -36,7 +59,14 @@ namespace MainService
         public void Start()
         {
             //client.OnMessage(OnMessage);
-             workThread.Start();
+            var namespaceManager = NamespaceManager.Create();
+            if (namespaceManager.TopicExists(TopicName) == false)
+            {
+                namespaceManager.CreateTopic(TopicName);
+            }
+
+
+            workThread.Start();
         }
 
         private void OnMessage()
@@ -49,7 +79,7 @@ namespace MainService
             }
             catch (Exception ex)
             {
-                
+
                 throw;
             }
             Stream largeMessageStream = largeMessage.GetBody<Stream>();
