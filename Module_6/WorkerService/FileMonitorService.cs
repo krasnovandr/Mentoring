@@ -1,9 +1,8 @@
 ﻿using System;
+using System.Configuration;
 using System.IO;
 using System.Threading;
-using MessageContracts;
-using Microsoft.ServiceBus;
-using Microsoft.ServiceBus.Messaging;
+using ServiceBusClient;
 
 namespace WorkerService
 {
@@ -11,18 +10,13 @@ namespace WorkerService
     {
         private readonly FileSystemWatcher _watcher;
         private readonly string _inputDirectory;
-        private readonly string _resultDirectory;
-        private readonly string _faultDirectory;
         private readonly PdfDocumentManager _pfPdfDocumentManager;
         private readonly ManualResetEvent _stopWorkEvent;
-        const string TopicName = "TestTopic";
-        private readonly string SubsName = "SettingsSubs";
+        private readonly TopicServiceBusClient _topicServiceBusClient;
 
         public FileMonitorService(string inputDirectory, string resultDirectory, string faultDirectory)
         {
             _inputDirectory = inputDirectory;
-            _resultDirectory = resultDirectory;
-            _faultDirectory = faultDirectory;
 
             if (!Directory.Exists(inputDirectory))
                 Directory.CreateDirectory(inputDirectory);
@@ -30,24 +24,34 @@ namespace WorkerService
             if (!Directory.Exists(resultDirectory))
                 Directory.CreateDirectory(resultDirectory);
 
-
-            if (!Directory.Exists(_faultDirectory))
-                Directory.CreateDirectory(_faultDirectory);
+            if (!Directory.Exists(faultDirectory))
+                Directory.CreateDirectory(faultDirectory);
 
             _watcher = new FileSystemWatcher(inputDirectory);
             _watcher.Created += Watcher_Created;
 
             _stopWorkEvent = new ManualResetEvent(false);
-            _pfPdfDocumentManager = new PdfDocumentManager(inputDirectory, resultDirectory, faultDirectory);
+            var sessionQueueServiceBusClient = new SessionQueueServiceBusClient();
+            sessionQueueServiceBusClient.CreateQueue();
+
+            _topicServiceBusClient = new TopicServiceBusClient();
+            _topicServiceBusClient.CreateQueue();
+            _topicServiceBusClient.CreateSubscription(ConfigurationManager.AppSettings["InputDirectory"]);
+            _pfPdfDocumentManager =
+                new PdfDocumentManager(
+                    inputDirectory, 
+                    resultDirectory, 
+                    faultDirectory, 
+                    sessionQueueServiceBusClient);
         }
 
 
         private void InitialProcessing()
         {
-            //foreach (var file in Directory.EnumerateFiles(_inputDirectory))
-            //{
-            //    FileProcessing(file);
-            //}
+            foreach (var file in Directory.EnumerateFiles(_inputDirectory))
+            {
+                FileProcessing(file);
+            }
         }
 
         private void Watcher_Created(object sender, FileSystemEventArgs e)
@@ -72,18 +76,11 @@ namespace WorkerService
 
         public void Start()
         {
-            var client = SubscriptionClient.Create(TopicName, SubsName, ReceiveMode.ReceiveAndDelete);
-            client.OnMessage(NewMessage);
-
-
             InitialProcessing();
             _watcher.EnableRaisingEvents = true;
         }
 
-        private void NewMessage(BrokeredMessage obj)
-        {
-            var a = obj.GetBody<WorkerServiceSettings>();
-        }
+    
 
         public void Stop()
         {

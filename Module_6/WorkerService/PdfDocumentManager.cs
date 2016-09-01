@@ -5,6 +5,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using MigraDoc.DocumentObjectModel;
 using MigraDoc.Rendering;
+using ServiceBusClient;
 using ZXing;
 
 namespace WorkerService
@@ -22,9 +23,13 @@ namespace WorkerService
         private readonly BarcodeReader _barcodeReader;
         private readonly TimeSpan _processingTimeout;
         private readonly Regex _fileMask;
-        private readonly ServiceBusClient _serviceBusClient;
+        private readonly SessionQueueServiceBusClient _sessionQueueServiceBusClient;
 
-        public PdfDocumentManager(string inputDirectory, string resultDirectory, string faultDirectory)
+        public PdfDocumentManager(
+            string inputDirectory, 
+            string resultDirectory, 
+            string faultDirectory, 
+            SessionQueueServiceBusClient sessionQueueServiceBusClient)
         {
             _inputDirectory = inputDirectory;
             _resultDirectory = resultDirectory;
@@ -34,7 +39,7 @@ namespace WorkerService
             _barcodeReader = new BarcodeReader { AutoRotate = true };
             _processingTimeout = new TimeSpan(0, 0, 1, 10);
             _fileMask = new Regex(@"([A-Za-z0-9])*_\d*\.(jpg|jpeg|png|gif|bmp)");
-            _serviceBusClient = new ServiceBusClient();
+            _sessionQueueServiceBusClient = sessionQueueServiceBusClient;
         }
 
 
@@ -94,8 +99,7 @@ namespace WorkerService
                 render.PdfDocument.Save(stream, false);
                 try
                 {
-                    _serviceBusClient.Send(stream);
-
+                    _sessionQueueServiceBusClient.SendFile(stream);
                 }
                 catch (Exception ex)
                 {
