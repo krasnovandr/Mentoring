@@ -16,8 +16,8 @@ namespace MainService
             _sessionQueueServiceBusClient = new SessionQueueServiceBusClient();
             _sessionQueueServiceBusClient.CreateQueue();
 
-            _topicServiceBusClient = new TopicServiceBusClient();
-            _topicServiceBusClient.CreateQueue();
+            _topicServiceBusClient = new TopicServiceBusClient(null,null);
+            _topicServiceBusClient.CreateTopics();
         }
 
         private void WorkProcedure()
@@ -27,6 +27,7 @@ namespace MainService
                 try
                 {
                     _topicServiceBusClient.SendSettings("New Sequence", new TimeSpan(0, 1, 0));
+                    _topicServiceBusClient.GetWorkerServiceStatus();
                     //_sessionQueueServiceBusClient.Receive();
 
                 }

@@ -52,6 +52,7 @@
     <Compile Include="SessionQueueServiceBusClient.cs" />
     <Compile Include="TopicServiceBusClient.cs" />
     <Compile Include="WorkerServiceSettings.cs" />
+    <Compile Include="WorkerServiceStatus.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

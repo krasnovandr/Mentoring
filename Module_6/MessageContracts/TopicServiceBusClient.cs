@@ -11,20 +11,41 @@ namespace ServiceBusClient
 {
     public class TopicServiceBusClient
     {
-        private readonly TopicClient _topicClient;
-        private SubscriptionClient _subscriptionClient;
-        const string TopicName = "SettingsTopic";
+        private readonly TopicClient _settingsTopicClient;
+        private readonly TopicClient _statusTopicClient;
+        private SubscriptionClient _settingsSubscriptionClient;
+        private SubscriptionClient _statusSubscriptionClient;
+        const string SettingsTopicName = "SettingsTopic";
+        const string StatusTopicName = "StatusTopic";
 
-        public TopicServiceBusClient()
+        private readonly Action<WorkerServiceSettings> _settingsTopicRecieve;
+        private readonly Action<string> _statusTopicRecieve;
+
+        public event Action<WorkerServiceSettings> SettingsRecievedEvent;
+        public event Action<string> StatusRecievedEvent;
+        public TopicServiceBusClient(
+            Action<WorkerServiceSettings> settingsTopicRecieve,
+            Action<string> statusTopicRecieve)
         {
-            _topicClient = TopicClient.Create(TopicName);
+            _settingsTopicRecieve = settingsTopicRecieve;
+            _statusTopicRecieve = statusTopicRecieve;
+            _statusTopicClient = TopicClient.Create(StatusTopicName);
+            _settingsTopicClient = TopicClient.Create(SettingsTopicName);
+            SettingsRecievedEvent += settingsTopicRecieve;
+            StatusRecievedEvent += statusTopicRecieve;
         }
-        public void CreateQueue()
+
+        public void CreateTopics()
         {
             var namespaceManager = NamespaceManager.Create();
-            if (namespaceManager.TopicExists(TopicName) == false)
+            if (namespaceManager.TopicExists(StatusTopicName) == false)
             {
-                namespaceManager.CreateTopic(TopicName);
+                namespaceManager.CreateTopic(StatusTopicName);
+            }
+
+            if (namespaceManager.TopicExists(SettingsTopicName) == false)
+            {
+                namespaceManager.CreateTopic(SettingsTopicName);
             }
 
         }
@@ -33,18 +54,29 @@ namespace ServiceBusClient
         {
             var namespaceManager = NamespaceManager.Create();
 
-            if (!namespaceManager.SubscriptionExists(TopicName, subscriptionName))
-                namespaceManager.CreateSubscription(TopicName, subscriptionName);
+            if (!namespaceManager.SubscriptionExists(StatusTopicName, subscriptionName))
+                namespaceManager.CreateSubscription(StatusTopicName, subscriptionName);
 
-            _subscriptionClient = SubscriptionClient.Create(TopicName, subscriptionName, ReceiveMode.ReceiveAndDelete);
-            _subscriptionClient.OnMessage(NewMessage);
+            if (!namespaceManager.SubscriptionExists(SettingsTopicName, subscriptionName))
+                namespaceManager.CreateSubscription(SettingsTopicName, subscriptionName);
+
+            _statusSubscriptionClient = SubscriptionClient.Create(StatusTopicName, subscriptionName, ReceiveMode.ReceiveAndDelete);
+            _statusSubscriptionClient.OnMessage(UpdateStatus);
+
+            _settingsSubscriptionClient = SubscriptionClient.Create(SettingsTopicName, subscriptionName, ReceiveMode.ReceiveAndDelete);
+            _settingsSubscriptionClient.OnMessage(NewSettings);
         }
 
-
-        private void NewMessage(BrokeredMessage obj)
+        private void NewSettings(BrokeredMessage obj)
         {
-            var a = obj.GetBody<WorkerServiceSettings>();
+            SettingsRecievedEvent(obj.GetBody<WorkerServiceSettings>());
         }
+
+        private void UpdateStatus(BrokeredMessage obj)
+        {
+            StatusRecievedEvent(obj.GetBody<string>());
+        }
+
 
         public void SendSettings(string newSequence, TimeSpan timeSpan)
         {
@@ -59,7 +91,17 @@ namespace ServiceBusClient
                 TimeToLive = new TimeSpan(0, 1, 0)
             };
 
-            _topicClient.Send(message);
+            _settingsTopicClient.Send(message);
+        }
+
+        public void GetWorkerServiceStatus()
+        {
+            var message = new BrokeredMessage("Get Status")
+            {
+                TimeToLive = new TimeSpan(0, 1, 0)
+            };
+
+            _statusTopicClient.Send(message);
         }
     }
 }

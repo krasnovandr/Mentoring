@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Drawing;
 using System.IO;
 using System.Text.RegularExpressions;
+using Microsoft.ServiceBus.Messaging;
 using MigraDoc.DocumentObjectModel;
 using MigraDoc.Rendering;
 using ServiceBusClient;
@@ -21,15 +23,16 @@ namespace WorkerService
         private DateTime _lastProcessedFileTime;
         private string _lastProcessedFile;
         private readonly BarcodeReader _barcodeReader;
-        private readonly TimeSpan _processingTimeout;
+        private TimeSpan _processingTimeout;
         private readonly Regex _fileMask;
         private readonly SessionQueueServiceBusClient _sessionQueueServiceBusClient;
+        private readonly TopicServiceBusClient _topicServiceBusClient;
+        private string _sequenceDelimeter = "New Sequence";
 
         public PdfDocumentManager(
             string inputDirectory, 
             string resultDirectory, 
-            string faultDirectory, 
-            SessionQueueServiceBusClient sessionQueueServiceBusClient)
+            string faultDirectory) 
         {
             _inputDirectory = inputDirectory;
             _resultDirectory = resultDirectory;
@@ -39,9 +42,31 @@ namespace WorkerService
             _barcodeReader = new BarcodeReader { AutoRotate = true };
             _processingTimeout = new TimeSpan(0, 0, 1, 10);
             _fileMask = new Regex(@"([A-Za-z0-9])*_\d*\.(jpg|jpeg|png|gif|bmp)");
-            _sessionQueueServiceBusClient = sessionQueueServiceBusClient;
+
+            _sessionQueueServiceBusClient = new SessionQueueServiceBusClient();
+            _sessionQueueServiceBusClient.CreateQueue();
+
+            _topicServiceBusClient = new TopicServiceBusClient(NewSettingsMessage,SendStatus);
+            _topicServiceBusClient.CreateTopics();
+            _topicServiceBusClient.CreateSubscription(ConfigurationManager.AppSettings["InputDirectory"]);
         }
 
+        private void SendStatus(string command)
+        {
+
+        }
+
+        private void NewSettingsMessage(WorkerServiceSettings serviceSettings)
+        {
+            _processingTimeout = serviceSettings.ProcessingTimeout;
+            _sequenceDelimeter = serviceSettings.BarcodeStopSequence;
+        }
+
+
+        //private void NewStatusMessage(BrokeredMessage obj)
+        //{
+        //    var a = obj.GetBody<WorkerServiceStatus>();
+        //}
 
         public void HandleNewFile(FileInfo fileInfo)
         {
@@ -52,7 +77,7 @@ namespace WorkerService
                 {
                     var bmp = (Bitmap)Image.FromFile(fileInfo.FullName);
                     var result = _barcodeReader.Decode(bmp);
-                    stopImage = result != null && result.Text == "New Sequence";
+                    stopImage = result != null && result.Text == _sequenceDelimeter;
                 }
                 catch (Exception exception)
                 {
