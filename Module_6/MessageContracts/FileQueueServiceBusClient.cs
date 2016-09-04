@@ -1,34 +1,42 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 
 namespace ServiceBusClient
 {
-    public class SessionQueueServiceBusClient
+    public class FileQueueServiceBusClient
     {
-        private readonly QueueClient _queueClient;
-        private const string QueueName = "filequeue";
+        private const string FileQueueName = "filequeue";
         private const int SubMessageBodySize = 192 * 1024;
 
-        public SessionQueueServiceBusClient()
+        private readonly QueueClient _fileQueueClient;
+
+        public FileQueueServiceBusClient()
         {
-            _queueClient = QueueClient.Create(QueueName);
+            _fileQueueClient = QueueClient.Create(FileQueueName);
+
         }
 
         public void CreateQueue()
         {
             var namespaceManager = NamespaceManager.Create();
-            if (namespaceManager.QueueExists(QueueName) == false)
+            if (namespaceManager.QueueExists(FileQueueName) == false)
             {
-                var description = new QueueDescription(QueueName)
+                var description = new QueueDescription(FileQueueName)
                 {
                     RequiresSession = true
                 };
                 namespaceManager.CreateQueue(description);
             }
-
+     
         }
+
+        
 
         public void SendFile(Stream file)
         {
@@ -36,6 +44,7 @@ namespace ServiceBusClient
             SplitAndSend(message);
             //queueClient.Close();
         }
+
 
         private void SplitAndSend(BrokeredMessage message)
         {
@@ -60,33 +69,37 @@ namespace ServiceBusClient
                     SessionId = sessionId
                 };
 
-                _queueClient.Send(subMessage);
+                _fileQueueClient.Send(subMessage);
             }
         }
 
-        public void Receive()
+        public MemoryStream CheckAndReceiveFile()
         {
-            MemoryStream largeMessage = AgregateAndReceive();
 
-            //Stream largeMessageStream = largeMessage.GetBody<Stream>();
+            MessageSession session;
+
+            try
+            {
+                session = _fileQueueClient.AcceptMessageSession(TimeSpan.FromTicks(1));
+            }
+            catch (TimeoutException exception)
+            {
+                return null;
+            }
+
+            MemoryStream largeMessage = AgregateAndReceive(session);
+
+
 
             largeMessage.Seek(0, SeekOrigin.Begin);
-            var documentName = string.Format("result_{0}.pdf", DateTime.Now.ToString("yyyyMMdd_hh_mm_ssfff"));
 
-            var fileOut = new FileStream(documentName, FileMode.Create);
-            largeMessage.CopyTo(fileOut);
-            fileOut.Close();
+            return largeMessage;
+
         }
 
-        public MemoryStream AgregateAndReceive()
+        private MemoryStream AgregateAndReceive(MessageSession session)
         {
-            // Create a memory stream to store the large message body.
             var largeMessageStream = new MemoryStream();
-
-            // Accept a message session from the queue.
-            MessageSession session = _queueClient.AcceptMessageSession();
-            //Console.WriteLine("Message session Id: " + session.SessionId);
-            //Console.Write("Receiving sub messages");
 
             while (true)
             {
@@ -95,25 +108,18 @@ namespace ServiceBusClient
 
                 if (subMessage != null)
                 {
-                    // Copy the sub message body to the large message stream.
                     Stream subMessageStream = subMessage.GetBody<Stream>();
                     subMessageStream.CopyTo(largeMessageStream);
 
-                    // Mark the message as complete.
                     subMessage.Complete();
-                    //Console.Write(".");
                 }
                 else
                 {
-                    // The last message in the sequence is our completeness criteria.
-                    //Console.WriteLine("Done!");
                     break;
                 }
             }
 
-            // Create an aggregated message from the large message stream.
             return largeMessageStream;
         }
-
     }
 }

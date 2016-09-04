@@ -1,4 +1,5 @@
-﻿using Topshelf;
+﻿using System.IO;
+using Topshelf;
 
 namespace MainService
 {

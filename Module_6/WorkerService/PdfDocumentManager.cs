@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Drawing;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Timers;
 using Microsoft.ServiceBus.Messaging;
 using MigraDoc.DocumentObjectModel;
 using MigraDoc.Rendering;
@@ -25,14 +26,18 @@ namespace WorkerService
         private readonly BarcodeReader _barcodeReader;
         private TimeSpan _processingTimeout;
         private readonly Regex _fileMask;
-        private readonly SessionQueueServiceBusClient _sessionQueueServiceBusClient;
+        private readonly FileQueueServiceBusClient _fileQueueServiceBusClient;
+        private readonly StatusQueueServiceBusClient _statusQueueServiceBusClient;
         private readonly TopicServiceBusClient _topicServiceBusClient;
         private string _sequenceDelimeter = "New Sequence";
+        public WorkerServiceStates CurrentState { get; set; }
+
+        public Timer Timer;
 
         public PdfDocumentManager(
-            string inputDirectory, 
-            string resultDirectory, 
-            string faultDirectory) 
+            string inputDirectory,
+            string resultDirectory,
+            string faultDirectory)
         {
             _inputDirectory = inputDirectory;
             _resultDirectory = resultDirectory;
@@ -43,17 +48,45 @@ namespace WorkerService
             _processingTimeout = new TimeSpan(0, 0, 1, 10);
             _fileMask = new Regex(@"([A-Za-z0-9])*_\d*\.(jpg|jpeg|png|gif|bmp)");
 
-            _sessionQueueServiceBusClient = new SessionQueueServiceBusClient();
-            _sessionQueueServiceBusClient.CreateQueue();
+            _fileQueueServiceBusClient = new FileQueueServiceBusClient();
+            _fileQueueServiceBusClient.CreateQueue();
 
-            _topicServiceBusClient = new TopicServiceBusClient(NewSettingsMessage,SendStatus);
+            _statusQueueServiceBusClient = new StatusQueueServiceBusClient();
+            _statusQueueServiceBusClient.CreateQueue();
+
+
+            _topicServiceBusClient = new TopicServiceBusClient();
+            _topicServiceBusClient.SettingsRecievedEvent += NewSettingsMessage;
+            _topicServiceBusClient.StatusRecievedEvent += SendStatus;
             _topicServiceBusClient.CreateTopics();
             _topicServiceBusClient.CreateSubscription(ConfigurationManager.AppSettings["InputDirectory"]);
+            CurrentState = WorkerServiceStates.Iddle;
+            Timer = new Timer(30000);
+            Timer.Elapsed += timer_Elapsed;
         }
 
-        private void SendStatus(string command)
+        void timer_Elapsed(object sender, ElapsedEventArgs e)
         {
+            UpdateStatus();
+        }
 
+        private void UpdateStatus()
+        {
+            _statusQueueServiceBusClient.Send(new WorkerServiceStatus
+            {
+                ClientName = ConfigurationManager.AppSettings["InputDirectory"],
+                CurrentState = CurrentState,
+                CurrentSettings = new WorkerServiceSettings
+                {
+                    BarcodeStopSequence = _sequenceDelimeter,
+                    ProcessingTimeout = _processingTimeout
+                }
+            });
+        }
+
+        public void SendStatus(string command)
+        {
+            UpdateStatus();
         }
 
         private void NewSettingsMessage(WorkerServiceSettings serviceSettings)
@@ -62,16 +95,11 @@ namespace WorkerService
             _sequenceDelimeter = serviceSettings.BarcodeStopSequence;
         }
 
-
-        //private void NewStatusMessage(BrokeredMessage obj)
-        //{
-        //    var a = obj.GetBody<WorkerServiceStatus>();
-        //}
-
         public void HandleNewFile(FileInfo fileInfo)
         {
             if (Regex.IsMatch(fileInfo.Name, _fileMask.ToString(), RegexOptions.IgnoreCase))
             {
+                CurrentState = WorkerServiceStates.WaitNewFile;
                 bool stopImage = false;
                 try
                 {
@@ -96,6 +124,7 @@ namespace WorkerService
                 }
                 else
                 {
+
                     AddImageToDocument(fileInfo.FullName);
                 }
 
@@ -124,19 +153,14 @@ namespace WorkerService
                 render.PdfDocument.Save(stream, false);
                 try
                 {
-                    _sessionQueueServiceBusClient.SendFile(stream);
+                    CurrentState = WorkerServiceStates.Iddle;
+                    _fileQueueServiceBusClient.SendFile(stream);
                 }
                 catch (Exception ex)
                 {
-                    
+
                     throw;
                 }
-             
-
-              
-                //var documentName = string.Format("result_{0}.pdf", DateTime.Now.ToString("yyyyMMdd_hh_mm_ssfff"));
-                //var resultpath = Path.Combine(_resultDirectory, documentName);
-                //render.Save(resultpath);
             }
             else
             {

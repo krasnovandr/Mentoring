@@ -12,6 +12,7 @@ namespace WorkerService
         private readonly string _inputDirectory;
         private readonly PdfDocumentManager _pfPdfDocumentManager;
         private readonly ManualResetEvent _stopWorkEvent;
+        private readonly StatusQueueServiceBusClient _queueServiceBusClient;
 
         public FileMonitorService(string inputDirectory, string resultDirectory, string faultDirectory)
         {
@@ -36,6 +37,7 @@ namespace WorkerService
                     inputDirectory, 
                     resultDirectory, 
                     faultDirectory);
+
         }
 
 
@@ -70,15 +72,14 @@ namespace WorkerService
         public void Start()
         {
             InitialProcessing();
+            _pfPdfDocumentManager.Timer.Start();
             _watcher.EnableRaisingEvents = true;
         }
-
-    
 
         public void Stop()
         {
             _watcher.EnableRaisingEvents = false;
-
+            _pfPdfDocumentManager.Timer.Stop();
             _stopWorkEvent.Set();
             _pfPdfDocumentManager.RenderDocument();
         }

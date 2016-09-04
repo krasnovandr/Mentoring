@@ -48,10 +48,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FileQueueServiceBusClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SessionQueueServiceBusClient.cs" />
+    <Compile Include="StatusQueueServiceBusClient.cs" />
     <Compile Include="TopicServiceBusClient.cs" />
-    <Compile Include="WorkerServiceSettings.cs" />
     <Compile Include="WorkerServiceStatus.cs" />
   </ItemGroup>
   <ItemGroup>

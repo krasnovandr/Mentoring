@@ -18,21 +18,17 @@ namespace ServiceBusClient
         const string SettingsTopicName = "SettingsTopic";
         const string StatusTopicName = "StatusTopic";
 
-        private readonly Action<WorkerServiceSettings> _settingsTopicRecieve;
-        private readonly Action<string> _statusTopicRecieve;
 
         public event Action<WorkerServiceSettings> SettingsRecievedEvent;
         public event Action<string> StatusRecievedEvent;
-        public TopicServiceBusClient(
-            Action<WorkerServiceSettings> settingsTopicRecieve,
-            Action<string> statusTopicRecieve)
+        public TopicServiceBusClient()
         {
-            _settingsTopicRecieve = settingsTopicRecieve;
-            _statusTopicRecieve = statusTopicRecieve;
+            //_settingsTopicRecieve = settingsTopicRecieve;
+            //_statusTopicRecieve = statusTopicRecieve;
             _statusTopicClient = TopicClient.Create(StatusTopicName);
             _settingsTopicClient = TopicClient.Create(SettingsTopicName);
-            SettingsRecievedEvent += settingsTopicRecieve;
-            StatusRecievedEvent += statusTopicRecieve;
+            //SettingsRecievedEvent += settingsTopicRecieve;
+            //StatusRecievedEvent += statusTopicRecieve;
         }
 
         public void CreateTopics()
@@ -69,23 +65,22 @@ namespace ServiceBusClient
 
         private void NewSettings(BrokeredMessage obj)
         {
-            SettingsRecievedEvent(obj.GetBody<WorkerServiceSettings>());
+            if (SettingsRecievedEvent != null)
+            {
+                SettingsRecievedEvent(obj.GetBody<WorkerServiceSettings>());
+            }
         }
 
         private void UpdateStatus(BrokeredMessage obj)
         {
-            StatusRecievedEvent(obj.GetBody<string>());
+            if (StatusRecievedEvent != null)
+            {
+                StatusRecievedEvent(obj.GetBody<string>());
+            }
         }
 
-
-        public void SendSettings(string newSequence, TimeSpan timeSpan)
+        public void SendSettings(WorkerServiceSettings settings)
         {
-            var settings = new WorkerServiceSettings
-            {
-                BarcodeStopSequence = newSequence,
-                ProcessingTimeout = timeSpan
-            };
-
             var message = new BrokeredMessage(settings)
             {
                 TimeToLive = new TimeSpan(0, 1, 0)

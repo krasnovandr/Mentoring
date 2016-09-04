@@ -1,0 +1,5 @@
+﻿<?xml version="1.0"?>
+<WorkerServiceSettings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <BarcodeStopSequence>New Sequence</BarcodeStopSequence>
+  <MyTimeout>00:01:13</MyTimeout>
+</WorkerServiceSettings>
