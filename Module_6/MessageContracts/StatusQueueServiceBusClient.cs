@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 

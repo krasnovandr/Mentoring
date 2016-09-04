@@ -32,7 +32,8 @@ namespace WorkerService
         private string _sequenceDelimeter = "New Sequence";
         public WorkerServiceStates CurrentState { get; set; }
 
-        public Timer Timer;
+        public Timer StatusUpdaterTimer;
+        public Timer ProcessingTimeoutTimer;
 
         public PdfDocumentManager(
             string inputDirectory,
@@ -61,11 +62,26 @@ namespace WorkerService
             _topicServiceBusClient.CreateTopics();
             _topicServiceBusClient.CreateSubscription(ConfigurationManager.AppSettings["InputDirectory"]);
             CurrentState = WorkerServiceStates.Iddle;
-            Timer = new Timer(30000);
-            Timer.Elapsed += timer_Elapsed;
+            StatusUpdaterTimer = new Timer(30000);
+
+            StatusUpdaterTimer.Elapsed += StatusUpdaterTimerElapsed;
+
+            //CreateSequenceTimer();
         }
 
-        void timer_Elapsed(object sender, ElapsedEventArgs e)
+        private void CreateSequenceTimer()
+        {
+            ProcessingTimeoutTimer = new Timer(_processingTimeout.TotalSeconds);
+            ProcessingTimeoutTimer.Start();
+            ProcessingTimeoutTimer.Elapsed += ProcessingTimeoutTimer_Elapsed;
+        }
+
+        void ProcessingTimeoutTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            RenderDocument();
+        }
+
+        void StatusUpdaterTimerElapsed(object sender, ElapsedEventArgs e)
         {
             UpdateStatus();
         }
@@ -93,6 +109,8 @@ namespace WorkerService
         {
             _processingTimeout = serviceSettings.ProcessingTimeout;
             _sequenceDelimeter = serviceSettings.BarcodeStopSequence;
+
+            //CreateSequenceTimer();
         }
 
         public void HandleNewFile(FileInfo fileInfo)

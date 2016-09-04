@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 
@@ -36,15 +32,11 @@ namespace ServiceBusClient
      
         }
 
-        
-
         public void SendFile(Stream file)
         {
-            BrokeredMessage message = new BrokeredMessage(file, true);
+            var message = new BrokeredMessage(file, true);
             SplitAndSend(message);
-            //queueClient.Close();
         }
-
 
         private void SplitAndSend(BrokeredMessage message)
         {
@@ -108,7 +100,7 @@ namespace ServiceBusClient
 
                 if (subMessage != null)
                 {
-                    Stream subMessageStream = subMessage.GetBody<Stream>();
+                    var subMessageStream = subMessage.GetBody<Stream>();
                     subMessageStream.CopyTo(largeMessageStream);
 
                     subMessage.Complete();

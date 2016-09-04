@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 
@@ -23,12 +18,8 @@ namespace ServiceBusClient
         public event Action<string> StatusRecievedEvent;
         public TopicServiceBusClient()
         {
-            //_settingsTopicRecieve = settingsTopicRecieve;
-            //_statusTopicRecieve = statusTopicRecieve;
             _statusTopicClient = TopicClient.Create(StatusTopicName);
             _settingsTopicClient = TopicClient.Create(SettingsTopicName);
-            //SettingsRecievedEvent += settingsTopicRecieve;
-            //StatusRecievedEvent += statusTopicRecieve;
         }
 
         public void CreateTopics()

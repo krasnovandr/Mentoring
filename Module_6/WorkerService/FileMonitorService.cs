@@ -72,14 +72,14 @@ namespace WorkerService
         public void Start()
         {
             InitialProcessing();
-            _pfPdfDocumentManager.Timer.Start();
+            _pfPdfDocumentManager.StatusUpdaterTimer.Start();
             _watcher.EnableRaisingEvents = true;
         }
 
         public void Stop()
         {
             _watcher.EnableRaisingEvents = false;
-            _pfPdfDocumentManager.Timer.Stop();
+            _pfPdfDocumentManager.StatusUpdaterTimer.Stop();
             _stopWorkEvent.Set();
             _pfPdfDocumentManager.RenderDocument();
         }
