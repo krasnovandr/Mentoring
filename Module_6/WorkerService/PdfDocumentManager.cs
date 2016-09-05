@@ -31,9 +31,7 @@ namespace WorkerService
         private readonly TopicServiceBusClient _topicServiceBusClient;
         private string _sequenceDelimeter = "New Sequence";
         public WorkerServiceStates CurrentState { get; set; }
-
         public Timer StatusUpdaterTimer;
-        public Timer ProcessingTimeoutTimer;
 
         public PdfDocumentManager(
             string inputDirectory,
@@ -65,20 +63,6 @@ namespace WorkerService
             StatusUpdaterTimer = new Timer(30000);
 
             StatusUpdaterTimer.Elapsed += StatusUpdaterTimerElapsed;
-
-            //CreateSequenceTimer();
-        }
-
-        private void CreateSequenceTimer()
-        {
-            ProcessingTimeoutTimer = new Timer(_processingTimeout.TotalSeconds);
-            ProcessingTimeoutTimer.Start();
-            ProcessingTimeoutTimer.Elapsed += ProcessingTimeoutTimer_Elapsed;
-        }
-
-        void ProcessingTimeoutTimer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            RenderDocument();
         }
 
         void StatusUpdaterTimerElapsed(object sender, ElapsedEventArgs e)
@@ -109,8 +93,6 @@ namespace WorkerService
         {
             _processingTimeout = serviceSettings.ProcessingTimeout;
             _sequenceDelimeter = serviceSettings.BarcodeStopSequence;
-
-            //CreateSequenceTimer();
         }
 
         public void HandleNewFile(FileInfo fileInfo)
@@ -171,7 +153,6 @@ namespace WorkerService
                 render.PdfDocument.Save(stream, false);
                 try
                 {
-                    CurrentState = WorkerServiceStates.Iddle;
                     _fileQueueServiceBusClient.SendFile(stream);
                 }
                 catch (Exception ex)

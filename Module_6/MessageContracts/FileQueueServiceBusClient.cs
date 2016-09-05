@@ -40,16 +40,13 @@ namespace ServiceBusClient
 
         private void SplitAndSend(BrokeredMessage message)
         {
-            // Calculate the number of sub messages required.
             long messageBodySize = message.Size;
 
-            // Create a unique session Id.
             string sessionId = Guid.NewGuid().ToString();
 
             var bodyStream = message.GetBody<Stream>();
             for (int streamOffest = 0; streamOffest < messageBodySize; streamOffest += SubMessageBodySize)
             {
-                // Get the stream chunk from the large message
                 long arraySize = (messageBodySize - streamOffest) > SubMessageBodySize
                     ? SubMessageBodySize : messageBodySize - streamOffest;
                 var subMessageBytes = new byte[arraySize];

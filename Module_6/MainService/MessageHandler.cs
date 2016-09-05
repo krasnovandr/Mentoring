@@ -42,6 +42,11 @@ namespace MainService
 
         private void WatcherOnChanged(object sender, FileSystemEventArgs fileSystemEventArgs)
         {
+            SynchroniseSettings();
+        }
+
+        private void SynchroniseSettings()
+        {
             var settings = ServiceSettings.ReadSettings();
             _topicServiceBusClient.SendSettings(settings);
             _topicServiceBusClient.GetWorkerServiceStatus();
@@ -89,6 +94,7 @@ namespace MainService
         public void Start()
         {
             _watcher.EnableRaisingEvents = true;
+            SynchroniseSettings();
             workThread.Start();
         }
 

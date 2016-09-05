@@ -51,7 +51,6 @@ namespace WorkerService
 
         private void Watcher_Created(object sender, FileSystemEventArgs e)
         {
-       
             FileProcessing(e.FullPath);
         }
 
