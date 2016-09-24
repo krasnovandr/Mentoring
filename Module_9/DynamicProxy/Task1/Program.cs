@@ -1,8 +1,6 @@
 ﻿using System.Configuration;
 using System.Diagnostics;
 using System.IO;
-using Castle.DynamicProxy;
-using LoggingLib;
 using Topshelf;
 
 namespace Task1
@@ -17,18 +15,13 @@ namespace Task1
             var faultDir = Path.Combine(currentDir, ConfigurationManager.AppSettings["FaultDirectory"]);
 
 
-            var generator = new ProxyGenerator();
-            var test =
-                generator.CreateInterfaceProxyWithTarget<IFileMonitorService>(
-                    new FileMonitorService(inDir, resultDir, faultDir), new LoggingInterceptor());
-
-         
+            IocContainerFactory.Create();
 
             HostFactory.Run(
                 hostConf => hostConf.Service<IFileMonitorService>(
                     s =>
                     {
-                        s.ConstructUsing(() => test);
+                        s.ConstructUsing(() => new FileMonitorService(inDir, resultDir, faultDir));
                         s.WhenStarted(serv => serv.Start());
                         s.WhenStopped(serv => serv.Stop());
                     }));

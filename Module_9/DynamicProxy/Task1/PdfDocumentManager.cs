@@ -1,14 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Text.RegularExpressions;
+using Castle.Core;
 using MigraDoc.DocumentObjectModel;
 using MigraDoc.Rendering;
 using ZXing;
 
 namespace Task1
 {
+    [Interceptor(typeof(LoggingLib.LoggingInterceptor))]
     public class PdfDocumentManager : IPdfDocumentManager
     {
         private Document _document;
@@ -23,18 +27,19 @@ namespace Task1
         private readonly TimeSpan _processingTimeout;
         private readonly Regex _fileMask;
 
-        public PdfDocumentManager(string inputDirectory, string resultDirectory, string faultDirectory)
+        public PdfDocumentManager()
         {
-            _inputDirectory = inputDirectory;
-            _resultDirectory = resultDirectory;
-            _faultDirectory = faultDirectory;
+            var currentDir = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+
+            _inputDirectory = Path.Combine(currentDir, ConfigurationManager.AppSettings["InputDirectory"]); 
+            _resultDirectory = Path.Combine(currentDir, ConfigurationManager.AppSettings["ResultDirectory"]); 
+            _faultDirectory = Path.Combine(currentDir, ConfigurationManager.AppSettings["FaultDirectory"]); 
             _sequenceFileNames = new List<string>();
             _sequenceFaulted = false;
             _barcodeReader = new BarcodeReader { AutoRotate = true };
             _processingTimeout = new TimeSpan(0, 0, 1, 10);
             _fileMask = new Regex(@"([A-Za-z0-9])*_\d*\.(jpg|jpeg|png|gif|bmp)");
         }
-
 
         public void HandleNewFile(FileInfo fileInfo)
         {

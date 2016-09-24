@@ -36,6 +36,9 @@
     <Reference Include="Castle.Core">
       <HintPath>..\packages\Castle.Core.3.3.3\lib\net45\Castle.Core.dll</HintPath>
     </Reference>
+    <Reference Include="Castle.Windsor">
+      <HintPath>..\packages\Castle.Windsor.3.3.0\lib\net45\Castle.Windsor.dll</HintPath>
+    </Reference>
     <Reference Include="MigraDoc.DocumentObjectModel">
       <HintPath>..\packages\PDFsharp-MigraDoc-GDI.1.32.4334.0\lib\net20\MigraDoc.DocumentObjectModel.dll</HintPath>
     </Reference>
@@ -71,7 +74,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IocContainerFactory.cs" />
     <Compile Include="FileMonitorService.cs" />
+    <Compile Include="Installer.cs" />
     <Compile Include="IPdfDocumentManager.cs" />
     <Compile Include="IFileMonitorService.cs" />
     <Compile Include="PdfDocumentManager.cs" />
@@ -83,6 +88,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="bin\Debug\in\" />
     <Folder Include="Images\" />
   </ItemGroup>
   <ItemGroup>

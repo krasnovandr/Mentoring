@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading;
 using Castle.DynamicProxy;
+using Castle.Windsor;
 using LoggingLib;
 
 namespace Task1
@@ -35,14 +36,7 @@ namespace Task1
             _watcher.Created += Watcher_Created;
 
             _stopWorkEvent = new ManualResetEvent(false);
-
-
-            var generator = new ProxyGenerator();
-            _pfPdfDocumentManager =
-                    generator.CreateInterfaceProxyWithTarget<IPdfDocumentManager>(
-                       new PdfDocumentManager(inputDirectory, resultDirectory, faultDirectory), 
-                       new LoggingInterceptor());
-
+            _pfPdfDocumentManager = IocContainerFactory.Container.Resolve<IPdfDocumentManager>();
         }
 
 
